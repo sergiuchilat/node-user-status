@@ -25,7 +25,7 @@ webApp.post('/users/ping', (request, response) => {
         appSecurity.checkAccess(request.query.key)
         user.validateStatus(request.body.status)
         user.put(request.body);
-        user.updateUsetStatusInTime();
+        //user.updateUsetStatusInTime();
         io.emit('online-users-count', user.countByStatus())
         //io.emit('online-users-list', user.get('all'))
         response.send({
@@ -40,7 +40,7 @@ webApp.get('/users/list/:status', (request, response) => {
     try {
         appSecurity.checkAccess(request.query.key)
         user.validateStatus(request.params.status)
-        user.updateUsetStatusInTime();
+        //user.updateUsetStatusInTime();
         response.send({
             data: user.get(request.params.status)
         })
@@ -52,7 +52,7 @@ webApp.get('/users/list/:status', (request, response) => {
 webApp.get('/users/count', (request, response) => {
     try {
         appSecurity.checkAccess(request.query.key)
-        user.updateUsetStatusInTime();
+        //user.updateUsetStatusInTime();
         response.send({
             data: user.countByStatus()
         })
@@ -84,6 +84,9 @@ webApp.get('/health', (request, response) => {
 
 webApp.listen(process.env.SERVER_PORT, process.env.SERVER_URL, () => {
     console.log(`Web app listening on port ${process.env.SERVER_PORT}`)
+    setInterval(() => {
+        user.updateStatusInTime();
+    }, 1000)
 })
 
 io.on('connection', (socket) => {

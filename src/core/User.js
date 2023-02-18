@@ -28,7 +28,7 @@ class User {
         return users;
     }
 
-    updateUsetStatusInTime() {
+    updateStatusInTime() {
         const users = this.get('all');
         users.forEach(user => {
 
@@ -52,7 +52,7 @@ class User {
         this.get('all').forEach(user => {
             counter[user.status]++;
         })
-        
+
         return counter;
     }
 
