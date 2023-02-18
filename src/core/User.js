@@ -28,17 +28,30 @@ class User {
         return users;
     }
 
+    getGroupedByStatus() {
+        const list = {
+            available: [],
+            busy: [],
+            away: []
+        }
+        this.get('all').forEach(user => {
+            list[user.status].push(user.id);
+        })
+
+        return list;
+    }
+
     updateStatusInTime() {
         const users = this.get('all');
         users.forEach(user => {
 
             if (['available', 'busy'].includes(user.status) && Date.now() > Number(user.time) + Number(process.env.STATUS_LIFETIME_AVAILABLE) * 1000) {
-                this.database.set(user.id, {
+                this.database.set(`${this.dbFieldPrefix}${user.id}`, {
                     ...user,
                     status: 'away'
                 });
             } else if (user.status === 'away' && Date.now() > Number(user.time) + Number(process.env.STATUS_LIFETIME_AWAY) * 1000) {
-                this.database.delete(user.id);
+                this.database.delete(`${this.dbFieldPrefix}${user.id}`);
             }
         })
     }

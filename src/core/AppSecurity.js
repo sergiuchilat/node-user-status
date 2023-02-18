@@ -5,8 +5,7 @@ class AppSecurity {
             if(process.env.ACCESS_KEY_SYSTEM !== key){
                 throw Error('access-denied')
             }
-        }
-        if(process.env.ACCESS_KEY !== key){
+        }else if(process.env.ACCESS_KEY !== key){
             throw Error('access-denied')
         }
     }
