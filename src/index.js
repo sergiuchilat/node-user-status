@@ -34,6 +34,21 @@ const getUsers = (status = 'all') => {
 
 const isSupportedStatus = (status) => ['all', 'available', 'busy', 'away'].includes(status);
 
+const updateUsetStatusInTime = () => {
+    const users = getUsers('all');
+    users.forEach(user => {
+        
+        if(['available', 'busy'].insludes(user.status) && Date.now() > Number(user.time) + Number(process.env.STATUS_LIFETIME_AVAILABLE) * 1000){
+            database.set(user.id, {
+                ...user,
+                status: 'away'
+            });
+        } else if(user.status === 'away' && Date.now() > Number(user.time) + Number(process.env.STATUS_LIFETIME_AWAY) * 1000){
+            database.delete(user.id);
+        }
+    })
+}
+
 app.post('/users/ping', (request, response) => {
     if(!accessGranted(request.query.key)){
         response.send({'error': 'access-denied'})
@@ -45,7 +60,11 @@ app.post('/users/ping', (request, response) => {
             response.send({'error': 'invalid-status'});
             return;
         }
-        database.set(request.body.user, request.body);
+        database.set(Number(request.body.user), {
+            id: Number(request.body.user),
+            status: request.body.status,
+            time: Date.now()
+        });
         response.send({
             data: database.get(request.body.user)
         })
@@ -67,6 +86,7 @@ app.get('/users/list/:status', (request, response) => {
             response.send({'error': 'invalid-status'})
             return;
         }
+        updateUsetStatusInTime();
         response.send({
             data: getUsers(status)
         })
@@ -88,6 +108,7 @@ app.get('/users/count', (request, response) => {
         away: 0
     }
     try{   
+        updateUsetStatusInTime();
         getUsers('all').forEach(user => {
             counter[user.status]++;
         })
