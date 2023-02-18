@@ -17,7 +17,7 @@ Request URL ``/users/ping?key=env.ACCESS_KEY``
 Request body:
 ```
 {
-    "user": UUID,
+    "user": id,
     "status": string,
     "time": datetime
 }
