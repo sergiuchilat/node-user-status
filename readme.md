@@ -1,14 +1,19 @@
+# Instalation 
 1. Run ``nmp install``
 2. Run ``nodemon src/index.js``
 
-# API documentation
+# Statuses description
 
 Available statuses:
 - available - user is online and available 
 - busy - user is online but is busy
-- away - user is away
 
-### Ping user activity
+Generated status:
+- away - is generated from available or busy after a timeout
+
+# REST API documentation
+
+## Ping user activity
 
 Request method: POST
 
@@ -17,7 +22,7 @@ Request URL ``/users/ping?key=env.ACCESS_KEY``
 Request body:
 ```
 {
-    "user": id,
+    "id": id,
     "status": string
 }
 ```
@@ -33,7 +38,7 @@ Response:
 }
 ```
 
-### Get list of users in a specified status
+## Get list of users in a specified status
 
 Request method: GET
 
@@ -57,19 +62,19 @@ Response:
         },
         {
             "user": "2",
-            "status": "busy",
+            "status": "away",
             "time": 1676735121
         },
         {
             "user": "3",
-            "status": "busy",
+            "status": "available",
             "time": 1676735121
         }
     ]
 }
 ```
 
-### Count userers grouped by status
+## Count users grouped by status
 
 Request method: GET
 
@@ -93,12 +98,14 @@ Response:
 ```
 
 
-### Flush database - will clear all data
+## Flush database - will clear all data
 
 Request method: GET
 Request URL ``/database/clear?key=env.ACCESS_KEY_SYSTEM``
 
 > status = all: will return all useers
+
+> will be used ACCESS_KEY_SYSTEM
 
 Request body:
 ```
@@ -109,5 +116,67 @@ Response:
 ```
 {
     "data": "success"
+}
+```
+
+# Socket documentation
+
+# Track user activity
+
+Emit event to socket.
+
+Event name: ``user-ping``
+
+Event message 
+```
+{
+    "id": 1,
+    "status": "available"
+}
+```
+
+## Get list of users in a specified status
+
+Listen event.
+
+Event name: ``online-users-list``
+
+Response:
+```
+{
+    "data": [
+        {
+            "user": "1",
+            "status": "busy",
+            "time": 1676735121
+        },
+        {
+            "user": "2",
+            "status": "away",
+            "time": 1676735121
+        },
+        {
+            "user": "3",
+            "status": "available",
+            "time": 1676735121
+        }
+    ]
+}
+```
+
+## Count users grouped by status
+
+Listen event.
+
+Event name: ``online-users-count``
+
+Response:
+```
+{
+    "data": {
+        "available": 6,
+        "busy": 19,
+        "away": 22
+    }
 }
 ```

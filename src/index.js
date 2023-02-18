@@ -1,149 +1,103 @@
-const express = require('express');
 require('dotenv').config()
-const app = express();
-app.use(express.json());
+const express = require('express');
+const webApp = express();
 const bodyParser = require('body-parser');
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
-
+const http = require('http');
+const socketIO = require('socket.io');
 const { InMemoryDatabase } = require('in-memory-database');
+
+const user = require('./core/User.js')
+const appSecurity = require('./core/AppSecurity.js')
+
+webApp.use(bodyParser.json());
+webApp.use(bodyParser.urlencoded({ extended: true }));
+webApp.use(express.json());
+
+const socketServer = http.createServer(webApp);
+const io = socketIO(socketServer);
 
 const database = new InMemoryDatabase();
 
-const accessGranted = (key, level = '') => {
-    if(level === 'SYSTEM'){
-        return process.env.ACCESS_KEY_SYSTEM === key;
-    }
-    return process.env.ACCESS_KEY === key;
-    
-}
+user.init(database);
 
-const getUsers = (status = 'all') => {
-    const keys = database.keys();
-    const users = [];
-    keys.forEach(key => {
-        const user = {...database.get(key)};
-
-        if(status === 'all' || user.status === status){
-            users.push(user)
-        }
-    })
-
-    return users;
-}
-
-const isSupportedStatus = (status) => ['all', 'available', 'busy', 'away'].includes(status);
-
-const countByStatus = () => {
-    const counter = {
-        available: 0,
-        busy: 0,
-        away: 0
-    }
-    getUsers('all').forEach(user => {
-        counter[user.status]++;
-    })
-    return counter;
-}
-
-const updateUsetStatusInTime = () => {
-    const users = getUsers('all');
-    users.forEach(user => {
-        
-        if(['available', 'busy'].insludes(user.status) && Date.now() > Number(user.time) + Number(process.env.STATUS_LIFETIME_AVAILABLE) * 1000){
-            database.set(user.id, {
-                ...user,
-                status: 'away'
-            });
-        } else if(user.status === 'away' && Date.now() > Number(user.time) + Number(process.env.STATUS_LIFETIME_AWAY) * 1000){
-            database.delete(user.id);
-        }
-    })
-}
-
-app.post('/users/ping', (request, response) => {
-    if(!accessGranted(request.query.key)){
-        response.send({'error': 'access-denied'})
-        return;
-    }
-    try{
-        const status = request.body.status;
-        if(!isSupportedStatus(status)){
-            response.send({'error': 'invalid-status'});
-            return;
-        }
-        database.set(Number(request.body.user), {
-            id: Number(request.body.user),
-            status: request.body.status,
-            time: Date.now()
-        });
+webApp.post('/users/ping', (request, response) => {
+    try {
+        appSecurity.checkAccess(request.query.key)
+        user.validateStatus(request.body.status)
+        user.put(request.body);
+        user.updateUsetStatusInTime();
+        io.emit('online-users-count', user.countByStatus())
+        //io.emit('online-users-list', user.get('all'))
         response.send({
-            data: countByStatus()
+            data: user.countByStatus()
         })
-    } catch(e){
-        response.send({
-            error: e
-        });
+    } catch (e) {
+        response.send({error: e.message});
     }
 })
 
-app.get('/users/list/:status', (request, response) => {
-    if(!accessGranted(request.query.key)){
-        response.send({'error': 'access-denied'})
-        return;
-    }
-    try{   
-        const status = request.params.status;
-        if(!isSupportedStatus(status)){
-            response.send({'error': 'invalid-status'})
-            return;
-        }
-        //updateUsetStatusInTime();
+webApp.get('/users/list/:status', (request, response) => {
+    try {
+        appSecurity.checkAccess(request.query.key)
+        user.validateStatus(request.params.status)
+        user.updateUsetStatusInTime();
         response.send({
-            data: getUsers(status)
+            data: user.get(request.params.status)
         })
-    }catch(e){
-        response.send({
-            errer: e
-        });
+    } catch (e) {
+        response.send({errer: e.message});
     }
 })
 
-app.get('/users/count', (request, response) => {
-    if(!accessGranted(request.query.key)){
-        response.send({'error': 'access-denied'})
-        return;
-    }
-    
-    try{   
-        //updateUsetStatusInTime();
+webApp.get('/users/count', (request, response) => {
+    try {
+        appSecurity.checkAccess(request.query.key)
+        user.updateUsetStatusInTime();
         response.send({
-            data: countByStatus()
+            data: user.countByStatus()
         })
-    }catch(e){
-        response.send({
-            error: e
-        });
+    } catch (e) {
+        response.send({error: e.message});
     }
 })
 
-app.get('/database/clear', (request, response) => {
-    if(!accessGranted(request.query.key, 'SYSTEM')){
-        response.send({'error': 'access-denied'})
-        return;
-    }
-    try{   
+webApp.get('/database/clear', (request, response) => {
+    try {
+        appSecurity.checkAccess(request.query.key, 'SYSTEM')
         database.flush();
         response.send({
             data: 'success'
         })
-    }catch(e){
-        response.send({
-            error: e
-        });
+    } catch (e) {
+        response.send({error: e.message});
     }
 })
 
-app.listen(process.env.SERVER_PORT, process.env.SERVER_URL, () => {
-    console.log(`Example app listening on port ${process.env.SERVER_PORT}`)
+webApp.get('/health', (request, response) => {
+    try {
+        appSecurity.checkAccess(request.query.key)
+        response.send({data: 'healthy'})
+    } catch (e) {
+        response.send({error: e.message});
+    }
 })
+
+webApp.listen(process.env.SERVER_PORT, process.env.SERVER_URL, () => {
+    console.log(`Web app listening on port ${process.env.SERVER_PORT}`)
+})
+
+io.on('connection', (socket) => {
+    socket.on('user-ping', (data) => {
+        try{
+            user.put({ ...data, time: Date.now() });
+            io.emit('online-users-count', user.countByStatus())
+            //io.emit('online-users-list', user.get('all'))
+        } catch(e){
+            console.log(e.message);
+        }
+    });
+})
+
+socketServer.listen(process.env.SOCKET_PORT, process.env.SERVER_URL, () => {
+    console.log(`Socket IO listening on port 3030`)
+});
