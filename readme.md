@@ -1,4 +1,4 @@
-1. Run nmp install
+1. Run ``nmp install``
 2. Run ``nodemon src/index.js``
 
 # API documentation
