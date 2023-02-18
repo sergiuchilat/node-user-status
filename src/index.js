@@ -34,6 +34,18 @@ const getUsers = (status = 'all') => {
 
 const isSupportedStatus = (status) => ['all', 'available', 'busy', 'away'].includes(status);
 
+const countByStatus = () => {
+    const counter = {
+        available: 0,
+        busy: 0,
+        away: 0
+    }
+    getUsers('all').forEach(user => {
+        counter[user.status]++;
+    })
+    return counter;
+}
+
 const updateUsetStatusInTime = () => {
     const users = getUsers('all');
     users.forEach(user => {
@@ -66,7 +78,7 @@ app.post('/users/ping', (request, response) => {
             time: Date.now()
         });
         response.send({
-            data: database.get(request.body.user)
+            data: countByStatus()
         })
     } catch(e){
         response.send({
@@ -102,18 +114,11 @@ app.get('/users/count', (request, response) => {
         response.send({'error': 'access-denied'})
         return;
     }
-    const counter = {
-        available: 0,
-        busy: 0,
-        away: 0
-    }
+    
     try{   
         //updateUsetStatusInTime();
-        getUsers('all').forEach(user => {
-            counter[user.status]++;
-        })
         response.send({
-            data: counter
+            data: countByStatus()
         })
     }catch(e){
         response.send({

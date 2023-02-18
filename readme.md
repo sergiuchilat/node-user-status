@@ -26,9 +26,9 @@ Response:
 ```
 {
     "data": {
-        "user": "3",
-        "status": "busy",
-        "time": 1676735121
+        "available": 12,
+        "busy": 2,
+        "away": 8
     }
 }
 ```
