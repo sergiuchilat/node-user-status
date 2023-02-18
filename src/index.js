@@ -87,7 +87,11 @@ webApp.listen(process.env.SERVER_PORT, process.env.SERVER_URL, () => {
     setInterval(() => {
         user.updateStatusInTime();
         const users = user.getGroupedByStatus();
-        io.emit('online-users', users)
+        if (users.available?.length || users.busy?.length || users.away?.length) {
+            io.emit('online-users', users)
+        } else {
+            io.emit('online-users', {})
+        }
         lastUpdatedTime = Date.now()
     }, process.env.STATUS_UPDATE_INTERVAL * 1000)
 })
