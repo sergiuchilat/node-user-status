@@ -86,7 +86,7 @@ app.get('/users/list/:status', (request, response) => {
             response.send({'error': 'invalid-status'})
             return;
         }
-        updateUsetStatusInTime();
+        //updateUsetStatusInTime();
         response.send({
             data: getUsers(status)
         })
@@ -108,7 +108,7 @@ app.get('/users/count', (request, response) => {
         away: 0
     }
     try{   
-        updateUsetStatusInTime();
+        //updateUsetStatusInTime();
         getUsers('all').forEach(user => {
             counter[user.status]++;
         })
