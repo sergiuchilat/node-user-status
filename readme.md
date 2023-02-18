@@ -70,6 +70,28 @@ Response:
 }
 ```
 
+### Count userers grouped by status
+
+Request method: GET
+
+Request URL ``/users/count?key=env.ACCESS_KEY``
+
+
+Request body:
+```
+NULL
+```
+
+Response:
+```
+{
+    "data": {
+        "available": 6,
+        "busy": 19,
+        "away": 22
+    }
+}
+```
 
 
 ### Flush database - will clear all data

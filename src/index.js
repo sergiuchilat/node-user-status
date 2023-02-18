@@ -77,19 +77,22 @@ app.get('/users/list/:status', (request, response) => {
     }
 })
 
-app.get('/users/count/:status', (request, response) => {
+app.get('/users/count', (request, response) => {
     if(!accessGranted(request.query.key)){
         response.send({'error': 'access-denied'})
         return;
     }
+    const counter = {
+        available: 0,
+        busy: 0,
+        away: 0
+    }
     try{   
-        const status = request.params.status;
-        if(!isSupportedStatus(status)){
-            response.send({'error': 'invalid-status'});
-            return;
-        }
+        getUsers('all').forEach(user => {
+            counter[user.status]++;
+        })
         response.send({
-            data: getUsers(status).length
+            data: counter
         })
     }catch(e){
         response.send({
