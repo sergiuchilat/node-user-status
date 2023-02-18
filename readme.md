@@ -18,8 +18,7 @@ Request body:
 ```
 {
     "user": id,
-    "status": string,
-    "time": datetime
+    "status": string
 }
 ```
 
@@ -29,7 +28,7 @@ Response:
     "data": {
         "user": "3",
         "status": "busy",
-        "time": "2023-02-18 16:33:13"
+        "time": 1676735121
     }
 }
 ```
@@ -54,17 +53,17 @@ Response:
         {
             "user": "1",
             "status": "busy",
-            "time": "2023-02-18 16:40:29"
+            "time": 1676735121
         },
         {
             "user": "2",
             "status": "busy",
-            "time": "2023-02-18 16:40:27"
+            "time": 1676735121
         },
         {
             "user": "3",
             "status": "busy",
-            "time": "2023-02-18 16:40:24"
+            "time": 1676735121
         }
     ]
 }
