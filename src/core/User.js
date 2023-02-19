@@ -43,14 +43,17 @@ class User {
 
     updateStatusInTime() {
         const users = this.get('all');
+        const timeoutActive = Number(process.env.STATUS_LIFETIME_ACTIVE) * 1000;
+        const timeoutAway = timeoutActive + Number(process.env.STATUS_LIFETIME_AWAY) * 1000;
         users.forEach(user => {
 
-            if (['available', 'busy'].includes(user.status) && Date.now() > Number(user.time) + Number(process.env.STATUS_LIFETIME_AVAILABLE) * 1000) {
+
+            if (['available', 'busy'].includes(user.status) && Date.now() > Number(user.time) + timeoutActive) {
                 this.database.set(`${this.dbFieldPrefix}${user.id}`, {
                     ...user,
                     status: 'away'
                 });
-            } else if (user.status === 'away' && Date.now() > Number(user.time) + Number(process.env.STATUS_LIFETIME_AWAY) * 1000) {
+            } else if (user.status === 'away' && Date.now() > Number(user.time) + timeoutAway) {
                 this.database.delete(`${this.dbFieldPrefix}${user.id}`);
             }
         })
